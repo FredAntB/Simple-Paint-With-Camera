@@ -1,5 +1,6 @@
 import cv2
 import os
+import HandTracker as ht
 
 header_folder_path = "Assets/Headers"
 header_files = os.listdir(header_folder_path)
@@ -20,6 +21,8 @@ if not cap.isOpened():
     print("Error: Could not open video.")
     exit()
 
+tracker = ht.HandDetector(detectionCon=0.8)
+
 while True:
     success, frame = cap.read()
     if not success:
@@ -28,7 +31,14 @@ while True:
 
     frame = cv2.flip(frame, 1)
 
+    frame = tracker.findHands(frame)
+    lmList = tracker.findPosition(frame, draw=False)
 
+    if len(lmList) != 0:
+        x1, y1 = lmList[8][1:]
+        x2, y2 = lmList[12][1:]
+
+        fingers = tracker.fingersUp()
 
     frame[0:125, 0:1280] = current_header
     cv2.imshow("Image", frame)

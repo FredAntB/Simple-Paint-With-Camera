@@ -56,3 +56,5 @@ class HandDetector:
                 fingers.append(1)
             else:
                 fingers.append(0)
+        
+        return fingers
