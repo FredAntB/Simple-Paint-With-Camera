@@ -1,6 +1,7 @@
 import cv2
 import os
 import HandTracker as ht
+from utils import only
 
 header_folder_path = "Assets/Headers"
 header_files = os.listdir(header_folder_path)
@@ -34,11 +35,18 @@ while True:
     frame = tracker.findHands(frame)
     lmList = tracker.findPosition(frame, draw=False)
 
-    if len(lmList) != 0:
-        x1, y1 = lmList[8][1:]
-        x2, y2 = lmList[12][1:]
+    if len(lmList) == 0:
+        continue
 
-        fingers = tracker.fingersUp()
+    x1, y1 = lmList[8][1:]
+    x2, y2 = lmList[12][1:]
+
+    fingers = tracker.fingersUp()
+
+    if only(fingers, [1, 2]):
+        print("Selection mode")
+    elif only(fingers, [1]):
+        print("Draw mode")
 
     frame[0:125, 0:1280] = current_header
     cv2.imshow("Image", frame)
