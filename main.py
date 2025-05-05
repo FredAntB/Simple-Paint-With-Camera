@@ -7,11 +7,8 @@ from utils import only, isInRange
 header_folder_path = "Assets/Headers"
 header_files = os.listdir(header_folder_path)
 
-headers = []
-for header_file in header_files:
-    if header_file.startswith("Header") and header_file.endswith(".png"):
-        image = cv2.imread(f'{header_folder_path}/{header_file}')
-        headers.append(image)
+headers = [cv2.resize(cv2.imread(f'{header_folder_path}/{header_file}'), (1280, 125))
+           for header_file in header_files if header_file.startswith("Header") and header_file.endswith(".png")]
 
 current_header = headers[0]
 
@@ -29,11 +26,14 @@ if not cap.isOpened():
     print("Error: Could not open video.")
     exit()
 
-tracker = ht.HandDetector(detectionCon=0.8)
+tracker = ht.HandDetector(detectionCon=0.6)
 canvas = np.zeros((720, 1280, 3), np.uint8)
 
 # previous positions saved for drawing lines
 xp, yp = None, None
+
+frame_count = 0
+process_interval = 2 # Process every 2nd frame
 
 while True:
     success, frame = cap.read()
@@ -43,52 +43,53 @@ while True:
 
     frame = cv2.flip(frame, 1)
 
-    frame = tracker.findHands(frame)
-    lmList = tracker.findPosition(frame, draw=False)
+    if frame_count % process_interval == 0:
+        frame = tracker.findHands(frame, draw=False)
+        lmList = tracker.findPosition(frame, draw=False)
 
-    if len(lmList) == 0:
-        continue
+        if len(lmList) != 0:
+            x1, y1 = lmList[8][1:]
+            x2, y2 = lmList[12][1:]
 
-    x1, y1 = lmList[8][1:]
-    x2, y2 = lmList[12][1:]
+            fingers = tracker.fingersUp()
 
-    fingers = tracker.fingersUp()
+            if only(fingers, [1, 2]): # Selection mode
+                xp, yp = None, None
 
-    if only(fingers, [1, 2]): # Selection mode
-        xp, yp = None, None
+                if y1 < 125: 
+                    if isInRange(x1, 188.75, 303.45):
+                        current_header = headers[1]
+                        current_color = (0, 0, 255)
+                        current_thickness = brush_thickness
+                    elif isInRange(x1, 406.25, 520.95):
+                        current_header = headers[2]
+                        current_color = (255, 0, 0)
+                        current_thickness = brush_thickness
+                    elif isInRange(x1, 623.75, 738.45):
+                        current_header = headers[3]
+                        current_color = (0, 255, 0)
+                        current_thickness = brush_thickness
+                    elif isInRange(x1, 828.95, 966.25):
+                        current_header = headers[4]
+                        current_color = (0, 0, 0)
+                        current_thickness = eraser_thickness
 
-        if y1 < 125: 
-            if isInRange(x1, 188.75, 303.45):
-                current_header = headers[1]
-                current_color = (0, 0, 255)
-                current_thickness = brush_thickness
-            elif isInRange(x1, 406.25, 520.95):
-                current_header = headers[2]
-                current_color = (255, 0, 0)
-                current_thickness = brush_thickness
-            elif isInRange(x1, 623.75, 738.45):
-                current_header = headers[3]
-                current_color = (0, 255, 0)
-                current_thickness = brush_thickness
-            elif isInRange(x1, 828.95, 966.25):
-                current_header = headers[4]
-                current_color = (0, 0, 0)
-                current_thickness = eraser_thickness
+                if current_color:
+                    cv2.rectangle(frame, (x1, y1-30), (x2, y2+30), current_color, cv2.FILLED)
+                
+            elif only(fingers, [1]): # Draw mode
+                if current_color:
+                    cv2.circle(frame, (x1, y1), 15, current_color, cv2.FILLED)
 
-        if current_color:
-            cv2.rectangle(frame, (x1, y1-30), (x2, y2+30), current_color, cv2.FILLED)
-        
-    elif only(fingers, [1]): # Draw mode
-        if current_color:
-            cv2.circle(frame, (x1, y1), 15, current_color, cv2.FILLED)
-
-            if xp is not None and yp is not None:
-                cv2.line(frame, (xp, yp), (x1, y1), current_color, current_thickness)
-                cv2.line(canvas, (xp, yp), (x1, y1), current_color, current_thickness)
-            
-            xp, yp = x1, y1
-    else:
-        xp, yp = None, None
+                    if xp is not None and yp is not None:
+                        cv2.line(canvas, (xp, yp), (x1, y1), current_color, current_thickness)
+                    
+                    xp, yp = x1, y1
+            else:
+                xp, yp = None, None
+    
+    if xp is not None and yp is not None:
+        cv2.circle(frame, (xp, yp), 15, current_color, cv2.FILLED)
     
     grayImg = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)
     _, imgInv = cv2.threshold(grayImg, 50, 255, cv2.THRESH_BINARY_INV)
@@ -99,7 +100,11 @@ while True:
 
     frame[0:125, 0:1280] = current_header
     cv2.imshow("Image", frame)
-    cv2.waitKey(1)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+    frame_count += 1
 
 cap.release()
 cv2.destroyAllWindows()
