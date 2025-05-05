@@ -22,6 +22,8 @@ cap.set(4, 720)
 # Variables for drawing -> This variables can be changed by the user during the program execution
 current_color = None
 current_thickness = 15
+brush_thickness = 15
+eraser_thickness = 50
 
 if not cap.isOpened():
     print("Error: Could not open video.")
@@ -59,15 +61,19 @@ while True:
             if isInRange(x1, 188.75, 303.45):
                 current_header = headers[1]
                 current_color = (0, 0, 255)
+                current_thickness = brush_thickness
             elif isInRange(x1, 406.25, 520.95):
                 current_header = headers[2]
                 current_color = (255, 0, 0)
+                current_thickness = brush_thickness
             elif isInRange(x1, 623.75, 738.45):
                 current_header = headers[3]
-                current_color = (0, 0, 0)
+                current_color = (0, 255, 0)
+                current_thickness = brush_thickness
             elif isInRange(x1, 828.95, 966.25):
                 current_header = headers[4]
-                current_color = None
+                current_color = (0, 0, 0)
+                current_thickness = eraser_thickness
 
         if current_color:
             cv2.rectangle(frame, (x1, y1-30), (x2, y2+30), current_color, cv2.FILLED)
@@ -81,11 +87,18 @@ while True:
                 cv2.line(canvas, (xp, yp), (x1, y1), current_color, current_thickness)
             
             xp, yp = x1, y1
+    else:
+        xp, yp = None, None
+    
+    grayImg = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)
+    _, imgInv = cv2.threshold(grayImg, 50, 255, cv2.THRESH_BINARY_INV)
+    imgInv = cv2.cvtColor(imgInv, cv2.COLOR_GRAY2BGR)
+    frame = cv2.bitwise_and(frame, imgInv)
+    frame = cv2.bitwise_or(frame, canvas)
             
 
     frame[0:125, 0:1280] = current_header
     cv2.imshow("Image", frame)
-    cv2.imshow("Canvas", canvas)
     cv2.waitKey(1)
 
 cap.release()
