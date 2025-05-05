@@ -1,6 +1,7 @@
 import cv2
 import os
 import HandTracker as ht
+import numpy as np
 from utils import only, isInRange
 
 header_folder_path = "Assets/Headers"
@@ -18,13 +19,19 @@ cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
 cap.set(4, 720)
 
+# Variables for drawing -> This variables can be changed by the user during the program execution
 current_color = None
+current_thickness = 15
 
 if not cap.isOpened():
     print("Error: Could not open video.")
     exit()
 
 tracker = ht.HandDetector(detectionCon=0.8)
+canvas = np.zeros((720, 1280, 3), np.uint8)
+
+# previous positions saved for drawing lines
+xp, yp = None, None
 
 while True:
     success, frame = cap.read()
@@ -46,6 +53,8 @@ while True:
     fingers = tracker.fingersUp()
 
     if only(fingers, [1, 2]): # Selection mode
+        xp, yp = None, None
+
         if y1 < 125: 
             if isInRange(x1, 188.75, 303.45):
                 current_header = headers[1]
@@ -67,8 +76,16 @@ while True:
         if current_color:
             cv2.circle(frame, (x1, y1), 15, current_color, cv2.FILLED)
 
+            if xp is not None and yp is not None:
+                cv2.line(frame, (xp, yp), (x1, y1), current_color, current_thickness)
+                cv2.line(canvas, (xp, yp), (x1, y1), current_color, current_thickness)
+            
+            xp, yp = x1, y1
+            
+
     frame[0:125, 0:1280] = current_header
     cv2.imshow("Image", frame)
+    cv2.imshow("Canvas", canvas)
     cv2.waitKey(1)
 
 cap.release()
