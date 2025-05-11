@@ -7,14 +7,14 @@ from utils import only, isInRange
 header_folder_path = "Assets/Headers"
 header_files = os.listdir(header_folder_path)
 
-headers = [cv2.resize(cv2.imread(f'{header_folder_path}/{header_file}'), (1280, 125))
+headers = [cv2.resize(cv2.imread(f'{header_folder_path}/{header_file}'), (1920, 125))
            for header_file in header_files if header_file.startswith("Header") and header_file.endswith(".png")]
 
 current_header = headers[0]
 
 cap = cv2.VideoCapture(0)
-cap.set(3, 1280)
-cap.set(4, 720)
+cap.set(3, 1920)
+cap.set(4, 1080)
 
 # Variables for drawing -> This variables can be changed by the user during the program execution
 current_color = None
@@ -27,7 +27,7 @@ if not cap.isOpened():
     exit()
 
 tracker = ht.HandDetector(detectionCon=0.6)
-canvas = np.zeros((720, 1280, 3), np.uint8)
+canvas = np.zeros((1080, 1920, 3), np.uint8)
 
 # previous positions saved for drawing lines
 xp, yp = None, None
@@ -82,8 +82,19 @@ while True:
                     cv2.circle(frame, (x1, y1), 15, current_color, cv2.FILLED)
 
                     if xp is not None and yp is not None:
-                        cv2.line(canvas, (xp, yp), (x1, y1), current_color, current_thickness)
-                    
+                        distance = int(np.hypot(x1 - xp, y1 - yp))
+
+                        step = max(1, distance // 10)
+                        prev_x, prev_y = xp, yp
+
+                        if distance > 0:
+                            for i in range(0, distance + 1, step):
+                                xi = int(xp + (x1 - xp) * (i / distance))
+                                yi = int(yp + (y1 - yp) * (i / distance))
+
+                                cv2.line(canvas, (prev_x, prev_y), (xi, yi), current_color, current_thickness)
+                                prev_x, prev_y = xi, yi
+                        
                     xp, yp = x1, y1
             else:
                 xp, yp = None, None
@@ -98,7 +109,7 @@ while True:
     frame = cv2.bitwise_or(frame, canvas)
             
 
-    frame[0:125, 0:1280] = current_header
+    frame[0:125, 0:1920] = current_header
     cv2.imshow("Image", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
