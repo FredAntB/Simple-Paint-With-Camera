@@ -15,7 +15,7 @@ pickers = [cv2.resize(cv2.imread(f'{picker_folder_path}/{picker_file}'), (90, 27
            for picker_file in picker_files if picker_file.startswith("Picker") and picker_file.endswith(".png")]
 
 COLOR_PICKER = 0 # color picker either for brush or pen
-FIGURE_PICKER = 1
+FIGURES_PICKER = 1
 
 header_folder_path = f"{assets_folder_path}/Headers"
 header_files = os.listdir(header_folder_path)
@@ -36,8 +36,8 @@ FIGURE_HEADERS = [0, 9, 2]
 
 # Picker coordinates (x, y)
 BRUSH_PICKER = (207, 125)
-PENCIL_PICKER = (437, 125)
-FIGURES_PICKER = (674, 125)
+PENCIL_PICKER = (450, 125)
+FIGURE_PICKER = (674, 125)
 
 current_header = headers[0] # is the Line Header as well as the default header
 
@@ -127,22 +127,22 @@ def toolbar_select(y1, x1):
 
     if y1 < 125: 
         if isInRange(x1, 144.2, 268.2):  # Brush selected
-            current_header = headers[0]
-            current_color = (0, 0, 255)
+            # current_header = headers[0]
+            # current_color = (0, 0, 255)
             current_thickness = brush_thickness
             current_picker = ("COLOR", "BRUSH")
             current_figure = None
 
         elif isInRange(x1, 372.1, 502.1):  # Pencil selected
-            current_color = (0, 255, 0)
+            # current_color = (0, 255, 0)
             current_thickness = pencil_thickness
             current_picker = ("COLOR", "PENCIL")
             current_figure = None
 
         elif isInRange(x1, 621.1, 746.1):  # Figure picker selected
-            current_color = (255, 0, 0)
+            # current_color = (255, 0, 0)
             current_thickness = None
-            current_picker = ("FIGURE", "FIGURES")
+            current_picker = ("FIGURES", "FIGURE")
 
         elif isInRange(x1, 842.75, 1007.25):  # Eraser selected
             current_header = headers[ERASER_HEADER]
