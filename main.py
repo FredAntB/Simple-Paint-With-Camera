@@ -3,6 +3,7 @@ import os
 import HandTracker as ht
 import numpy as np
 from utils import only, isInRange
+from time import time
 
 assets_folder_path = "Assets"
 
@@ -240,6 +241,8 @@ while True:
             elif only(fingers, [0, 1]): # Figure mode
                 current_mode = "Figure"
                 if current_figure:
+                    if not current_color:
+                        current_color = (0, 0, 255)
                     if current_figure == "Line":
                         cv2.line(canvas, (x1, y1), (x0, y0), current_color, current_thickness)
                     elif current_figure == "Rectangle":
