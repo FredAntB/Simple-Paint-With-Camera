@@ -24,6 +24,7 @@ headers = [cv2.resize(cv2.imread(f'{header_folder_path}/{header_file}'), (1280, 
            for header_file in header_files if header_file.startswith("Header") and header_file.endswith(".png")]
 
 # Indexes regarding the header images
+# index reference: ['Header1.png', 'Header10.png', 'Header2.png', 'Header3.png', 'Header4.png', 'Header5.png', 'Header6.png', 'Header7.png', 'Header8.png', 'Header9.png']
 # Eraser Header -> 1
 ERASER_HEADER = 1
 # Brush Headers -> 2, 3, 4 -> Red, Blue, Green
@@ -44,6 +45,7 @@ cursor = cv2.resize(cv2.imread(f'{assets_folder_path}/{cursor_filename}'), (50, 
 
 # Variables for drawing -> This variables can be changed by the user during the program execution
 current_color = None
+current_figure = None
 current_mode = None
 current_picker = None
 current_thickness = 15
@@ -97,8 +99,31 @@ def draw_picker(frame):
     # Overlay the color options image onto the frame
     frame[top_left_y:bottom_right_y, top_left_x:bottom_right_x] = picker
 
-def toolbar_select(y1, x1, frame):
-    global current_header, current_color, current_thickness, current_picker  # Declare global variables
+def toolbar_select(y1, x1):
+    global current_header, current_color, current_thickness, current_picker, current_figure  # Declare global variables
+
+    if current_picker:  # If the picker is open
+        # Set of conditions to check if the user is selecting a color or figure inside the picker
+        picker_x, picker_y = eval(f"{current_picker[1]}_PICKER")
+        if isInRange(x1, picker_x, picker_x + 90):  # Check if the x coordinate is within the picker range
+            if isInRange(y1, picker_y + 5, picker_y + 85):
+                if current_picker[0] == "COLOR":
+                    current_color = (0, 0, 255)
+                    current_figure = None
+                elif current_picker[0] == "FIGURE":
+                    current_figure = "Line"
+            elif isInRange(y1, picker_y + 85, picker_y + 125):
+                if current_picker[0] == "COLOR":
+                    current_color = (0, 255, 0)
+                    current_figure = None
+                elif current_picker[0] == "FIGURE":
+                    current_figure = "Rectangle"
+            elif isInRange(y1, picker_y + 125, picker_y + 145):
+                if current_picker[0] == "COLOR":
+                    current_color = (255, 0, 0)
+                    current_figure = None
+                elif current_picker[0] == "FIGURE":
+                    current_figure = "Circle"
 
     if y1 < 125: 
         if isInRange(x1, 144.2, 268.2):  # Brush selected
@@ -106,11 +131,13 @@ def toolbar_select(y1, x1, frame):
             current_color = (0, 0, 255)
             current_thickness = brush_thickness
             current_picker = ("COLOR", "BRUSH")
+            current_figure = None
 
         elif isInRange(x1, 372.1, 502.1):  # Pencil selected
             current_color = (0, 255, 0)
             current_thickness = pencil_thickness
             current_picker = ("COLOR", "PENCIL")
+            current_figure = None
 
         elif isInRange(x1, 621.1, 746.1):  # Figure picker selected
             current_color = (255, 0, 0)
@@ -122,6 +149,7 @@ def toolbar_select(y1, x1, frame):
             current_color = (0, 0, 0)
             current_thickness = eraser_thickness
             current_picker = None
+            current_figure = None
 
 cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
@@ -163,7 +191,7 @@ while True:
                 xp, yp = None, None
                 current_mode = "Selection"
 
-                toolbar_select(y1, x1, frame)
+                toolbar_select(y1, x1)
 
                 coords = [x1, x2, y1, y2]
                 if current_color:
@@ -190,6 +218,19 @@ while True:
                         
                     xp, yp = x1, y1
                     coords = None
+            elif only(fingers, [0, 1]): # Figure mode
+                current_mode = "Figure"
+                if current_figure:
+                    if current_figure == "Line":
+                        cv2.line(canvas, (x1, y1), (x2, y2), current_color, current_thickness)
+                    elif current_figure == "Rectangle":
+                        cv2.rectangle(canvas, (x1, y1), (x2, y2), current_color, current_thickness)
+                    elif current_figure == "Circle":
+                        radius = int(np.hypot(x1 - x2, y1 - y2) // 2)
+                        center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+                        cv2.circle(canvas, center, radius, current_color, current_thickness)
+            elif all(fingers):
+                canvas = np.zeros((720, 1280, 3), np.uint8)
             else:
                 xp, yp = None, None
                 coords = None
