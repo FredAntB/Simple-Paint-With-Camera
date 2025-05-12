@@ -52,6 +52,7 @@ current_thickness = 15
 brush_thickness = 15
 pencil_thickness = 5
 eraser_thickness = 50
+figure_thickness = 5
 
 def draw_cursor(frame, x1, x2, y1, y2):
     if cursor is None:
@@ -113,7 +114,7 @@ def toolbar_select(y1, x1):
                     current_color = (0, 0, 255)
                     current_figure = None
 
-                elif current_picker[0] == "FIGURE":
+                elif current_picker[0] == "FIGURES":
                     current_figure = "Line"
                 
                 index = 1
@@ -123,7 +124,7 @@ def toolbar_select(y1, x1):
                     current_color = (255, 0, 0)
                     current_figure = None
 
-                elif current_picker[0] == "FIGURE":
+                elif current_picker[0] == "FIGURES":
                     current_figure = "Rectangle"
                 
                 index = 2
@@ -133,7 +134,7 @@ def toolbar_select(y1, x1):
                     current_color = (0, 255, 0)
                     current_figure = None
 
-                elif current_picker[0] == "FIGURE":
+                elif current_picker[0] == "FIGURES":
                     current_figure = "Circle"
                 
                 index = 3
@@ -158,7 +159,7 @@ def toolbar_select(y1, x1):
 
         elif isInRange(x1, 621.1, 746.1):  # Figure picker selected
             # current_color = (255, 0, 0)
-            current_thickness = None
+            current_thickness = figure_thickness
             current_picker = ("FIGURES", "FIGURE")
 
         elif isInRange(x1, 842.75, 1007.25):  # Eraser selected
@@ -199,6 +200,7 @@ while True:
         lmList = tracker.findPosition(frame, draw=False)
 
         if len(lmList) != 0:
+            x0, y0 = lmList[4][1:]  # Thumb tip
             x1, y1 = lmList[8][1:]
             x2, y2 = lmList[12][1:]
 
@@ -239,12 +241,12 @@ while True:
                 current_mode = "Figure"
                 if current_figure:
                     if current_figure == "Line":
-                        cv2.line(canvas, (x1, y1), (x2, y2), current_color, current_thickness)
+                        cv2.line(canvas, (x1, y1), (x0, y0), current_color, current_thickness)
                     elif current_figure == "Rectangle":
-                        cv2.rectangle(canvas, (x1, y1), (x2, y2), current_color, current_thickness)
+                        cv2.rectangle(canvas, (x1, y1), (x0, y0), current_color, current_thickness)
                     elif current_figure == "Circle":
-                        radius = int(np.hypot(x1 - x2, y1 - y2) // 2)
-                        center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+                        radius = int(np.hypot(x1 - x0, y1 - y0) // 2)
+                        center = (int((x1 + x0) / 2), int((y1 + y0) / 2))
                         cv2.circle(canvas, center, radius, current_color, current_thickness)
             elif all(fingers):
                 canvas = np.zeros((720, 1280, 3), np.uint8)
