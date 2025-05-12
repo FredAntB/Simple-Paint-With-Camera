@@ -25,14 +25,14 @@ headers = [cv2.resize(cv2.imread(f'{header_folder_path}/{header_file}'), (1280, 
 
 # Indexes regarding the header images
 # index reference: ['Header1.png', 'Header10.png', 'Header2.png', 'Header3.png', 'Header4.png', 'Header5.png', 'Header6.png', 'Header7.png', 'Header8.png', 'Header9.png']
-# Eraser Header -> 1
-ERASER_HEADER = 1
-# Brush Headers -> 2, 3, 4 -> Red, Blue, Green
-BRUSH_HEADERS = [2, 3, 4]
-# Pencil Headers -> 5, 6, 7 -> Red, Blue, Green
-PENCIL_HEADERS = [5, 6, 7]
-# Figure Headers -> 0, 8, 9 -> Line, Rectangle, Circle
-FIGURE_HEADERS = [0, 8, 9]
+# Eraser Header -> 2
+ERASER_HEADER = 2
+# Brush Headers -> 3, 4, 5 -> Red, Blue, Green
+BRUSH_HEADERS = [3, 4, 5]
+# Pencil Headers -> 6, 7, 8 -> Red, Blue, Green
+PENCIL_HEADERS = [6, 7, 8]
+# Figure Headers -> 0, 9, 2 -> Line, Rectangle, Circle
+FIGURE_HEADERS = [0, 9, 2]
 
 # Picker coordinates (x, y)
 BRUSH_PICKER = (207, 125)
@@ -112,15 +112,15 @@ def toolbar_select(y1, x1):
                     current_figure = None
                 elif current_picker[0] == "FIGURE":
                     current_figure = "Line"
-            elif isInRange(y1, picker_y + 85, picker_y + 125):
+            elif isInRange(y1, picker_y + 95, picker_y + 175):
                 if current_picker[0] == "COLOR":
-                    current_color = (0, 255, 0)
+                    current_color = (255, 0, 0)
                     current_figure = None
                 elif current_picker[0] == "FIGURE":
                     current_figure = "Rectangle"
-            elif isInRange(y1, picker_y + 125, picker_y + 145):
+            elif isInRange(y1, picker_y + 190, picker_y + 265):
                 if current_picker[0] == "COLOR":
-                    current_color = (255, 0, 0)
+                    current_color = (0, 255, 0)
                     current_figure = None
                 elif current_picker[0] == "FIGURE":
                     current_figure = "Circle"
