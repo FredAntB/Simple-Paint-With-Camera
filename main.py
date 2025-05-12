@@ -11,7 +11,7 @@ cursor_filename = "cursor.png"
 picker_folder_path = f"{assets_folder_path}/Pickers"
 picker_files = os.listdir(picker_folder_path)
 
-pickers = [cv2.resize(cv2.imread(f'{picker_folder_path}/{picker_file}'), (45, 135))
+pickers = [cv2.resize(cv2.imread(f'{picker_folder_path}/{picker_file}'), (90, 270))
            for picker_file in picker_files if picker_file.startswith("Picker") and picker_file.endswith(".png")]
 
 COLOR_PICKER = 0 # color picker either for brush or pen
@@ -33,9 +33,23 @@ PENCIL_HEADERS = [5, 6, 7]
 # Figure Headers -> 0, 8, 9 -> Line, Rectangle, Circle
 FIGURE_HEADERS = [0, 8, 9]
 
+# Picker coordinates (x, y)
+BRUSH_PICKER = (207, 125)
+PENCIL_PICKER = (437, 125)
+FIGURES_PICKER = (674, 125)
+
 current_header = headers[0] # is the Line Header as well as the default header
 
 cursor = cv2.resize(cv2.imread(f'{assets_folder_path}/{cursor_filename}'), (50, 50))
+
+# Variables for drawing -> This variables can be changed by the user during the program execution
+current_color = None
+current_mode = None
+current_picker = None
+current_thickness = 15
+brush_thickness = 15
+pencil_thickness = 5
+eraser_thickness = 50
 
 def draw_cursor(frame, x1, x2, y1, y2):
     if cursor is None:
@@ -71,16 +85,47 @@ def draw_cursor(frame, x1, x2, y1, y2):
     # Overlay the cursor image onto the frame
     frame[top_left_y:top_left_y + resized_height, top_left_x:top_left_x + resized_width] = cursor_resized
 
+def draw_picker(frame):
+    # Display the picker image below the toolbar
+    picker = pickers[eval(f"{current_picker[0]}_PICKER")]
+    color_options_h, color_options_w, _ = picker.shape
+    top_left_x, top_left_y = eval(f"{current_picker[1]}_PICKER")
+
+    bottom_right_x = min(frame.shape[1], top_left_x + color_options_w)
+    bottom_right_y = min(frame.shape[0], top_left_y + color_options_h)
+
+    # Overlay the color options image onto the frame
+    frame[top_left_y:bottom_right_y, top_left_x:bottom_right_x] = picker
+
+def toolbar_select(y1, x1, frame):
+    global current_header, current_color, current_thickness, current_picker  # Declare global variables
+
+    if y1 < 125: 
+        if isInRange(x1, 144.2, 268.2):  # Brush selected
+            current_header = headers[0]
+            current_color = (0, 0, 255)
+            current_thickness = brush_thickness
+            current_picker = ("COLOR", "BRUSH")
+
+        elif isInRange(x1, 372.1, 502.1):  # Pencil selected
+            current_color = (0, 255, 0)
+            current_thickness = pencil_thickness
+            current_picker = ("COLOR", "PENCIL")
+
+        elif isInRange(x1, 621.1, 746.1):  # Figure picker selected
+            current_color = (255, 0, 0)
+            current_thickness = None
+            current_picker = ("FIGURE", "FIGURES")
+
+        elif isInRange(x1, 842.75, 1007.25):  # Eraser selected
+            current_header = headers[ERASER_HEADER]
+            current_color = (0, 0, 0)
+            current_thickness = eraser_thickness
+            current_picker = None
+
 cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
 cap.set(4, 720)
-
-# Variables for drawing -> This variables can be changed by the user during the program execution
-current_color = None
-current_mode = None
-current_thickness = 15
-brush_thickness = 15
-eraser_thickness = 50
 
 if not cap.isOpened():
     print("Error: Could not open video.")
@@ -118,23 +163,7 @@ while True:
                 xp, yp = None, None
                 current_mode = "Selection"
 
-                if y1 < 125: 
-                    if isInRange(x1, 188.75, 303.45):
-                        current_header = headers[1]
-                        current_color = (0, 0, 255)
-                        current_thickness = brush_thickness
-                    elif isInRange(x1, 406.25, 520.95):
-                        current_header = headers[2]
-                        current_color = (255, 0, 0)
-                        current_thickness = brush_thickness
-                    elif isInRange(x1, 623.75, 738.45):
-                        current_header = headers[3]
-                        current_color = (0, 255, 0)
-                        current_thickness = brush_thickness
-                    elif isInRange(x1, 828.95, 966.25):
-                        current_header = headers[4]
-                        current_color = (0, 0, 0)
-                        current_thickness = eraser_thickness
+                toolbar_select(y1, x1, frame)
 
                 coords = [x1, x2, y1, y2]
                 if current_color:
@@ -165,6 +194,7 @@ while True:
                 xp, yp = None, None
                 coords = None
                 current_mode = None
+                current_picker = None
     
     if current_mode == "Draw":
         if xp is not None and yp is not None:
@@ -182,7 +212,8 @@ while True:
     frame = cv2.bitwise_and(frame, imgInv)
     frame = cv2.bitwise_or(frame, canvas)
             
-
+    if current_picker:
+        draw_picker(frame)
     frame[0:125, 0:1280] = current_header
     cv2.imshow("Image", frame)
 
