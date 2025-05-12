@@ -11,15 +11,31 @@ cursor_filename = "cursor.png"
 picker_folder_path = f"{assets_folder_path}/Pickers"
 picker_files = os.listdir(picker_folder_path)
 
+pickers = [cv2.resize(cv2.imread(f'{picker_folder_path}/{picker_file}'), (45, 135))
+           for picker_file in picker_files if picker_file.startswith("Picker") and picker_file.endswith(".png")]
+
+COLOR_PICKER = 0 # color picker either for brush or pen
+FIGURE_PICKER = 1
+
 header_folder_path = f"{assets_folder_path}/Headers"
 header_files = os.listdir(header_folder_path)
 
 headers = [cv2.resize(cv2.imread(f'{header_folder_path}/{header_file}'), (1280, 125))
            for header_file in header_files if header_file.startswith("Header") and header_file.endswith(".png")]
 
-cursor = cv2.resize(cv2.imread(f'{assets_folder_path}/{cursor_filename}'), (50, 50))
+# Indexes regarding the header images
+# Eraser Header -> 1
+ERASER_HEADER = 1
+# Brush Headers -> 2, 3, 4 -> Red, Blue, Green
+BRUSH_HEADERS = [2, 3, 4]
+# Pencil Headers -> 5, 6, 7 -> Red, Blue, Green
+PENCIL_HEADERS = [5, 6, 7]
+# Figure Headers -> 0, 8, 9 -> Line, Rectangle, Circle
+FIGURE_HEADERS = [0, 8, 9]
 
-current_header = headers[0]
+current_header = headers[0] # is the Line Header as well as the default header
+
+cursor = cv2.resize(cv2.imread(f'{assets_folder_path}/{cursor_filename}'), (50, 50))
 
 def draw_cursor(frame, x1, x2, y1, y2):
     if cursor is None:
