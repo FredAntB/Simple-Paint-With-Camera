@@ -32,12 +32,12 @@ BRUSH_HEADERS = [3, 4, 5]
 # Pencil Headers -> 6, 7, 8 -> Red, Blue, Green
 PENCIL_HEADERS = [6, 7, 8]
 # Figure Headers -> 0, 9, 2 -> Line, Rectangle, Circle
-FIGURE_HEADERS = [0, 9, 2]
+FIGURE_HEADERS = [0, 9, 1]
 
 # Picker coordinates (x, y)
 BRUSH_PICKER = (207, 125)
 PENCIL_PICKER = (450, 125)
-FIGURE_PICKER = (674, 125)
+FIGURE_PICKER = (680, 125)
 
 current_header = headers[0] # is the Line Header as well as the default header
 
@@ -106,24 +106,41 @@ def toolbar_select(y1, x1):
         # Set of conditions to check if the user is selecting a color or figure inside the picker
         picker_x, picker_y = eval(f"{current_picker[1]}_PICKER")
         if isInRange(x1, picker_x, picker_x + 90):  # Check if the x coordinate is within the picker range
+            index = None
+
             if isInRange(y1, picker_y + 5, picker_y + 85):
                 if current_picker[0] == "COLOR":
                     current_color = (0, 0, 255)
                     current_figure = None
+
                 elif current_picker[0] == "FIGURE":
                     current_figure = "Line"
+                
+                index = 1
+
             elif isInRange(y1, picker_y + 95, picker_y + 175):
                 if current_picker[0] == "COLOR":
                     current_color = (255, 0, 0)
                     current_figure = None
+
                 elif current_picker[0] == "FIGURE":
                     current_figure = "Rectangle"
+                
+                index = 2
+
             elif isInRange(y1, picker_y + 190, picker_y + 265):
                 if current_picker[0] == "COLOR":
                     current_color = (0, 255, 0)
                     current_figure = None
+
                 elif current_picker[0] == "FIGURE":
                     current_figure = "Circle"
+                
+                index = 3
+            else:
+                index = None
+            if index:
+                current_header = headers[eval(f"{current_picker[1]}_HEADERS[{index-1}]")]
 
     if y1 < 125: 
         if isInRange(x1, 144.2, 268.2):  # Brush selected
